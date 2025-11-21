@@ -239,7 +239,7 @@
             text-transform: uppercase;
         }
 
-        input[type="text"], textarea {
+        input[type="text"], input[type="number"], textarea, select {
             width: 100%;
             background-color: var(--input-bg);
             border: 1px solid var(--border-color);
@@ -291,6 +291,63 @@
         #file-input {
             display: none;
         }
+
+        /* SCARS Section */
+        .scar-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: flex-end;
+        }
+        .scar-select-wrapper {
+            flex-grow: 1;
+        }
+        
+        .scar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .scar-card {
+            background: #111;
+            border: 1px solid #444;
+            padding: 10px;
+            position: relative;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .scar-content {
+            flex-grow: 1;
+        }
+        .scar-title {
+            font-weight: bold;
+            color: var(--accent-red);
+            margin-bottom: 4px;
+        }
+        .scar-desc {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .scar-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .scar-btn {
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            border: 1px solid #555;
+            background: #222;
+            cursor: pointer;
+        }
+        .scar-btn:hover { background: #333; }
+        .scar-btn.del:hover { background: var(--accent-red); color: #fff; }
+
 
         /* Collapsible Memo */
         .collapsible {
@@ -468,8 +525,8 @@
             </div>
             <div class="stats-grid">
                 <div>
-                    <label>HP (Hit Points)</label>
-                    <input type="text" id="char-hp" style="font-size: 1.2rem; font-weight: bold; color: var(--accent-red);" onchange="updateState('hpText', this.value)">
+                    <label>HP (Current/Max)</label>
+                    <input type="number" id="char-hp" style="font-size: 1.2rem; font-weight: bold; color: var(--accent-red);" onchange="updateState('hpVal', this.value)">
                 </div>
                 <div>
                     <label>Sparks (火花/Omens)</label>
@@ -532,6 +589,22 @@
                     <textarea id="hum-flesh" onchange="updateState('flesh', this.value)"></textarea>
                 </div>
             </div>
+            
+            <!-- Scars Section -->
+            <div style="margin-top: 20px; border-top: 1px dashed #333; padding-top: 15px;">
+                <label style="color: var(--accent-red); font-weight: bold;">Scars of the Pilgrimage (巡礼の傷跡)</label>
+                <div class="scar-controls">
+                    <div class="scar-select-wrapper">
+                        <select id="scar-selector">
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+                    <button onclick="addScarFromSelect()" class="scar-btn" style="background: #333;">ADD SCAR</button>
+                </div>
+                <div id="scar-list" class="scar-list">
+                    <!-- Added scars go here -->
+                </div>
+            </div>
         </div>
 
         <!-- Collapsible Memo -->
@@ -554,6 +627,7 @@
 
 <script>
     /* ================= DATA TABLES ================= */
+    // Common Tables
     const NAMES_D66={11:"アグニ",12:"ベーク",13:"シンダー",14:"ドロスト",15:"エイス",16:"フリッカー",21:"グリム",22:"ハウド",23:"イセル",24:"ヤルヴ",25:"コル",26:"ルーメ",31:"モル",32:"ニックス",33:"オリエ",34:"ペク",35:"クイル",36:"ロスト",41:"スクーガ",42:"タルグ",43:"ウグン",44:"ヴェケ",45:"ヴァルグ",46:"クシル",51:"ユルヴァ",52:"ジンク",53:"エスカ",54:"オード",55:"オング",56:"クラグ",61:"ソール",62:"モーネ",63:"ヴィット",64:"スヴァルト",65:"ノル",66:"名無し"};
     const ORIGINS=["蝋の都、ロウ (Rou): お前の肌は熱で溶けたようにただれている。寒さを恐れる。","鏡の海、スペゲルハヴェット: 氷の上を歩くのだけは得意だ。鏡に映る自分の顔を割りたくなる。","錆びた肺、クグハムン: 呼吸するたびに錆びた鉄の味がする。静寂に耐えられない。","渇きの森、トルストヴァルト: 「眠ったら死ぬ」ことを本能で知っている。睡眠が極端に浅い。","盲目の天文台、オクルス: 太陽を見たことがないが、青白い月の光だけは直視できる。","何処でもない雪原: 故郷の記憶などない。あるのは「止まったら凍る」という事実だけだ。"];
     const PSYCHE_TRAITS=["熱量への執着: 相手との距離を不快なほど詰める。","青い幻聴: 死んだはずの家族の声を聞く。","影への不信: 自分の影が自分を殺そうとしていると信じている。","燃料の美食家: 薪や油の「味」や「燃える匂い」に詳しい。","太陽の否定: 太陽など最初から存在しなかったと信じている。","瞬きしない: 乾燥した眼球で虚空を見つめ続ける。","震える指: 何かを燃やしたいという衝動を抑えている。","死体愛好: 死体を見ると「美しい薪」として評価する。","エントロピー恐怖症: 物が壊れる音、錆びる音にパニックを起こす。","蝋の収集癖: 自分の体から落ちた垢や蝋を集めている。","逆さまの思考: 重要な決断をするときだけコイントスに頼る。","沈黙の歌い手: 声を出さずに常に歌っている。","痛みによる確認: 凍っていないか確認するために自分を針で刺す。","鏡への憎悪: 鏡や氷に映る自分の顔を直視できない。","機械仕掛けの祈り: 機械音を聞くと安堵する。","盗癖: 「暖かいもの」だけを無意識にポケットに入れる。","死の予言: 仲間の死因を勝手に断定する。","月光浴: 青白い月の光を浴びると興奮を覚える。","記憶の混濁: 自分ではない誰かの記憶が混ざっている。","絶対的な希望: 狂気的なまでに「太陽は戻る」と信じている。"];
@@ -563,6 +637,52 @@
     const WEAPONS=["凍てついた大腿骨 (d4): 殴るたびに少し溶ける。ファンブルで砕ける。","鯨捕りのハープーン (d6): ロープをつければ敵を引き寄せられる。","赤熱した火掻き棒 (d4+1): 常に熱い。松明代わりになる。","採掘用つるはし (d6): 硬い甲羅や氷の皮膚に対し攻撃DR-2。","太陽硝子のナイフ (d4): アンデッドにはd8ダメージ。","ボイラー解体ハンマー (d6): 物体を破壊する判定に自動成功。","錆びたチェーンウィップ (d4): 命中時、d6で6なら武器を落とさせる。","氷柱の槍 (d8): 使い捨て。命中すると折れて追加d2ダメージ。","削岩ドリル (d8): 両手持ち。使用後d2ラウンド聞こえなくなる。","星鉄のグレートソード (d10): 両手持ち。重すぎて敏捷DR+2。","対人用クロスボウ (d8): ボルト10本付き。","点火用フレアガン (d6): 弾薬3発。着弾点は1分間光源になる。"];
     const ARMORS=["獣の毛皮とボロ布 (Tier 1, -d2): 濡れると乾くまで効果0。","硬化レザーコート (Tier 1, -d2): 人の皮かもしれない。臭う。","廃材のパッチワーク (Tier 2, -d4): 敏捷DR+2。","凍結防止の重層服 (Tier 2, -d4): 冷気ダメージ-1。敏捷DR+2。","古代の潜水服 (Tier 3, -d6): 毒ガス無効。敏捷DR+4、防御DR+2。","棺桶の蓋(盾) (-1): 隠れれば死体のふりができる。"];
     const GEARS=["ランタンと油: 6時間持続。","鯨の脂肪(固形): 燃料兼非常食。5回分。","マグネシウムの短冊: 一瞬の強烈な閃光。","黒曜石の解剖刀: 鋭利。切断DR-2。","保温塩: 衣服に入れるとd4時間発熱。","麻薬入りの煙草: 恐怖判定を無効化。","汚れた聖書: 焚き付けに最適。","縫合キット: 感染症判定を1回やり直せる。","アイゼン: 氷の上で転ばない。","偽造された通行証: 検問を一度だけ通過できるかも。","携帯用蒸留器: 雪や汚水を飲み水に変える。","誰かの遺書: 読むと10分間動けなくなる。","「綻び」探知機: 近くに綻びがあると針が狂う。","防腐剤の瓶: 「薪」の運搬に必須。","ガラスの目玉: 嵌めると「死者の視界」を得る。","睡眠薬入りの酒: 寒さを忘れて眠れる。","ペットの雪ネズミ: 狭い穴に入って鍵を開ける(50%)。","チョーク(蛍光): 暗闇で光る文字が書ける。","太陽の絵画(贋作): 毒々しい色の太陽の絵。","爆薬の詰まった瓶: 投擲d10ダメージ。d6で1なら不発。"];
+    
+    // Scars of the Pilgrimage Table
+    const SCARS_D66 = {
+        11: { title: "11-16 虚無の研磨", desc: "何も得ず、何も失わなかった。ただ、以前より少しだけ寒さを感じなくなった気がする。" },
+        12: { title: "11-16 虚無の研磨", desc: "何も得ず、何も失わなかった。ただ、以前より少しだけ寒さを感じなくなった気がする。" },
+        13: { title: "11-16 虚無の研磨", desc: "何も得ず、何も失わなかった。ただ、以前より少しだけ寒さを感じなくなった気がする。" },
+        14: { title: "11-16 虚無の研磨", desc: "何も得ず、何も失わなかった。ただ、以前より少しだけ寒さを感じなくなった気がする。" },
+        15: { title: "11-16 虚無の研磨", desc: "何も得ず、何も失わなかった。ただ、以前より少しだけ寒さを感じなくなった気がする。" },
+        16: { title: "11-16 虚無の研磨", desc: "何も得ず、何も失わなかった。ただ、以前より少しだけ寒さを感じなくなった気がする。" },
+        
+        21: { title: "21 石油の血液", desc: "【効果】火炎ダメージ+d4(弱点)。HPをd2減らして血をランタンに入れれば燃料として使用可。" },
+        22: { title: "22 死者の声帯", desc: "【効果】死体と会話可(Yes/No質問3つ)。生者との交渉判定DR+2。" },
+        23: { title: "23 霜の眼球", desc: "【効果】暗闇で熱源が見える。強い光の下では目くらまし。" },
+        24: { title: "24 第六の指", desc: "【効果】敏捷判定ファンブル時、1日1回だけ振り直せる。" },
+        25: { title: "25 重力アンカーの破片", desc: "【効果】重力異常や吹き飛ばしに抵抗可。水に入れば沈む。" },
+        26: { title: "26 生きた継ぎ接ぎ", desc: "【効果】休憩時のHP回復量+1。見た目は醜悪になる。" },
+        
+        31: { title: "31 肋骨の檻", desc: "【効果】被クリティカル時のダメージ倍加を無効化。" },
+        32: { title: "32 太陽の夢", desc: "【効果】火花の最大所持数+1。目覚めた時の喪失感で存在-1。" },
+        33: { title: "33 真空の肺", desc: "【効果】毒ガス、水中、酸素の薄い高地での判定DR-2。" },
+        34: { title: "34 這い回る影", desc: "【効果】1日1回、遠くの小さな物体を引き寄せられる。" },
+        35: { title: "35 冷たき手", desc: "【効果】熱感知無効。触れた水を凍らせる。" },
+        36: { title: "36 共食いの記憶", desc: "【効果】人肉・腐肉でHP回復可能。腹を壊さない。" },
+        
+        41: { title: "41 不発弾の心臓", desc: "【効果】HP0時、d6で6ならHP1で踏みとどまる。" },
+        42: { title: "42 磁気帯び", desc: "【効果】金属武器による被ダメージ-1。コンパスを狂わせる。" },
+        43: { title: "43 蝋の涙", desc: "【効果】悲しい時に流れる蝋を集めれば、光源や接着剤になる。" },
+        44: { title: "44 幻肢痛の予感", desc: "【効果】不意打ち(Surprise)判定を無効化する。" },
+        45: { title: "45 古い地図の刺青", desc: "【効果】GMは次のシナリオに関するヒントを与える。" },
+        46: { title: "46 犠牲の誓い", desc: "【効果】視界内の味方へのダメージを肩代わりできる(半減して受ける)。" },
+        
+        51: { title: "51 スクロールの飲み込み", desc: "【効果】ランダムなスクロールを1つ習得する。" },
+        52: { title: "52 王族の狂気", desc: "【効果】存在判定+1。従者扱いされると激怒する。" },
+        53: { title: "53 銀の舌", desc: "【効果】交渉判定DR-2。キスした相手は凍傷。" },
+        54: { title: "54 内なる暖炉", desc: "【効果】寒冷ダメージ-1。極寒の夜でも凍死しない。" },
+        55: { title: "55 歯車の指関節", desc: "【効果】鍵開け・精密作業DR-2。隠密には不向き。" },
+        56: { title: "56 太陽硝子の皮膚", desc: "【効果】光属性攻撃を受けた時、ダメージの代わりにHP回復。物理衝撃には脆い。" },
+        
+        61: { title: "61-66 純粋な燃料", desc: "【効果】最終的な「点火の儀式」での獲得ポイント+5。" },
+        62: { title: "61-66 純粋な燃料", desc: "【効果】最終的な「点火の儀式」での獲得ポイント+5。" },
+        63: { title: "61-66 純粋な燃料", desc: "【効果】最終的な「点火の儀式」での獲得ポイント+5。" },
+        64: { title: "61-66 純粋な燃料", desc: "【効果】最終的な「点火の儀式」での獲得ポイント+5。" },
+        65: { title: "61-66 純粋な燃料", desc: "【効果】最終的な「点火の儀式」での獲得ポイント+5。" },
+        66: { title: "61-66 純粋な燃料", desc: "【効果】最終的な「点火の儀式」での獲得ポイント+5。" },
+    };
+
     const CLASSES = {
         "Sun-Dreamer": {
             name: "太陽の夢想家 (Sun-Dreamer)",
@@ -628,10 +748,6 @@
         classAbility: "",
         abilities: { agility: 0, presence: 0, strength: 0, toughness: 0 },
         hpVal: 0,
-        hpMax: 0,
-        hpStr: "",
-        sparksVal: 0,
-        sparksMax: 0,
         sparksStr: "",
         weapon: "",
         weaponDice: "",
@@ -639,6 +755,7 @@
         armorDice: "",
         gear: "",
         humanity: { spark: "", past: "", psyche: "", flesh: "" },
+        scars: [], // Array of {title, desc}
         memo: "",
         useClass: true
     };
@@ -646,7 +763,7 @@
     function updateState(key, value) {
         if(key === 'name') currentCharacter.name = value;
         if(key === 'origin') currentCharacter.origin = value;
-        if(key === 'hpText') currentCharacter.hpStr = value;
+        if(key === 'hpVal') currentCharacter.hpVal = parseInt(value);
         if(key === 'sparksText') currentCharacter.sparksStr = value;
         if(key === 'weapon') currentCharacter.weapon = value;
         if(key === 'weaponDice') currentCharacter.weaponDice = value;
@@ -679,7 +796,7 @@
         document.getElementById('ab-strength').innerText = currentCharacter.abilities.strength > 0 ? "+" + currentCharacter.abilities.strength : currentCharacter.abilities.strength;
         document.getElementById('ab-toughness').innerText = currentCharacter.abilities.toughness > 0 ? "+" + currentCharacter.abilities.toughness : currentCharacter.abilities.toughness;
 
-        document.getElementById('char-hp').value = currentCharacter.hpStr;
+        document.getElementById('char-hp').value = currentCharacter.hpVal;
         document.getElementById('char-sparks').value = currentCharacter.sparksStr;
 
         document.getElementById('eq-weapon').value = currentCharacter.weapon;
@@ -694,6 +811,8 @@
         document.getElementById('hum-flesh').value = currentCharacter.humanity.flesh;
         
         document.getElementById('free-memo').value = currentCharacter.memo || "";
+
+        renderScars();
     }
 
     /* ================= LOGIC ================= */
@@ -724,7 +843,6 @@
         return rolls.reduce((a,b) => a+b, 0);
     }
 
-    // Robust dice extraction
     function findDiceValue(text, type) {
         if (!text) return "";
         let regex;
@@ -737,6 +855,64 @@
         if (match) return match[1];
         return "";
     }
+
+    /* ================= SCARS LOGIC ================= */
+    
+    // Populate Select Box
+    const select = document.getElementById('scar-selector');
+    for (const key in SCARS_D66) {
+        const option = document.createElement('option');
+        option.value = key;
+        option.text = SCARS_D66[key].title;
+        select.appendChild(option);
+    }
+
+    function addScarFromSelect() {
+        const val = document.getElementById('scar-selector').value;
+        if (!val) return;
+        const scarData = SCARS_D66[val];
+        if (scarData) {
+            currentCharacter.scars.push({ ...scarData });
+            renderScars();
+        }
+    }
+
+    function removeScar(index) {
+        currentCharacter.scars.splice(index, 1);
+        renderScars();
+    }
+
+    function moveScar(index, direction) {
+        // direction: -1 (up), 1 (down)
+        if (index + direction < 0 || index + direction >= currentCharacter.scars.length) return;
+        const temp = currentCharacter.scars[index];
+        currentCharacter.scars[index] = currentCharacter.scars[index + direction];
+        currentCharacter.scars[index + direction] = temp;
+        renderScars();
+    }
+
+    function renderScars() {
+        const container = document.getElementById('scar-list');
+        container.innerHTML = "";
+        currentCharacter.scars.forEach((scar, index) => {
+            const el = document.createElement('div');
+            el.className = "scar-card";
+            el.innerHTML = `
+                <div class="scar-content">
+                    <div class="scar-title">${scar.title}</div>
+                    <div class="scar-desc">${scar.desc}</div>
+                </div>
+                <div class="scar-actions">
+                    <button class="scar-btn" onclick="moveScar(${index}, -1)">▲</button>
+                    <button class="scar-btn" onclick="moveScar(${index}, 1)">▼</button>
+                    <button class="scar-btn del" onclick="removeScar(${index})">✕</button>
+                </div>
+            `;
+            container.appendChild(el);
+        });
+    }
+
+    /* ================= GENERATOR ================= */
 
     function generateCharacter() {
         const useClass = document.getElementById('use-class-toggle').checked;
@@ -754,7 +930,6 @@
         let charClass = null;
         let stats = { agility: 0, presence: 0, strength: 0, toughness: 0 };
         let hpVal = 0;
-        let hpMaxStr = "";
         let sparksStr = "d2";
         let sparksVal = 0;
 
@@ -783,7 +958,6 @@
             stats.strength = convertToStat(roll(3,6) + charClass.stats_mod.strength);
             stats.toughness = convertToStat(roll(3,6) + charClass.stats_mod.toughness);
 
-            hpMaxStr = charClass.hp;
             let hpDie = parseInt(charClass.hp.match(/d(\d+)/)[1]);
             hpVal = stats.toughness + roll(1, hpDie);
             if (hpVal < 1) hpVal = 1;
@@ -793,7 +967,6 @@
 
             currentCharacter.classAbility = getRandom(charClass.abilities);
 
-            // Equip
             if (charClass.weapon_fixed) weaponText = charClass.weapon_fixed;
             else if (charClass.weapon_table) weaponText = getRandom(charClass.weapon_table);
             else weaponText = getRandom(WEAPONS);
@@ -814,7 +987,6 @@
             stats.strength = convertToStat(roll4d6DropLowest());
             stats.toughness = convertToStat(roll4d6DropLowest());
 
-            hpMaxStr = "Toughness + d8";
             hpVal = stats.toughness + roll(1,8);
             if (hpVal < 1) hpVal = 1;
             
@@ -830,8 +1002,6 @@
 
         currentCharacter.abilities = stats;
         currentCharacter.hpVal = hpVal;
-        currentCharacter.hpMax = 0; 
-        currentCharacter.hpStr = `${hpVal} (Max: ${hpMaxStr})`;
         currentCharacter.sparksVal = sparksVal;
         currentCharacter.sparksStr = `${sparksVal} / ${sparksStr}`;
         currentCharacter.weapon = weaponText;
@@ -839,8 +1009,7 @@
         currentCharacter.armor = armorText;
         currentCharacter.armorDice = armorDice;
         currentCharacter.gear = gearText;
-        
-        // Keep existing memo if regenerating? Usually reset is better for new char.
+        currentCharacter.scars = []; // Reset scars on generate
         currentCharacter.memo = "";
 
         updateDOM();
@@ -895,11 +1064,16 @@
             commands.push(`${currentCharacter.armorDice} ダメージ軽減: ${aName}`);
         }
 
+        let scarsText = "";
+        if (currentCharacter.scars.length > 0) {
+            scarsText = "\n\n【巡礼の傷跡】\n" + currentCharacter.scars.map(s => `・${s.title}\n  ${s.desc}`).join("\n");
+        }
+
         const data = {
             kind: "character",
             data: {
                 name: currentCharacter.name,
-                memo: `【クラス】${currentCharacter.className}\n\n【出自】\n${currentCharacter.origin}\n\n【人間性】\n${currentCharacter.humanity.spark}\n${currentCharacter.humanity.psyche}\n${currentCharacter.humanity.flesh}\n\n【装備】\n武器: ${currentCharacter.weapon} [${currentCharacter.weaponDice}]\n防具: ${currentCharacter.armor} [-${currentCharacter.armorDice}]\n\n${currentCharacter.gear}\n\n【特技】\n${currentCharacter.classAbility}\n\n【MEMO】\n${currentCharacter.memo}`,
+                memo: `【クラス】${currentCharacter.className}\n\n【出自】\n${currentCharacter.origin}\n\n【人間性】\n${currentCharacter.humanity.spark}\n${currentCharacter.humanity.psyche}\n${currentCharacter.humanity.flesh}\n\n【装備】\n武器: ${currentCharacter.weapon} [${currentCharacter.weaponDice}]\n防具: ${currentCharacter.armor} [-${currentCharacter.armorDice}]\n\n${currentCharacter.gear}\n\n【特技】\n${currentCharacter.classAbility}${scarsText}\n\n【MEMO】\n${currentCharacter.memo}`,
                 initiative: a.agility, 
                 status: [
                     { label: "HP", value: currentCharacter.hpVal, max: currentCharacter.hpVal },
@@ -945,8 +1119,12 @@
         reader.onload = function(e) {
             try {
                 const data = JSON.parse(e.target.result);
-                if (!data.weaponDice && data.weapon) data.weaponDice = findDiceValue(data.weapon, 'weapon');
-                if (!data.armorDice && data.armor) data.armorDice = findDiceValue(data.armor, 'armor');
+                // Compatibility check for scars
+                if (!data.scars) data.scars = [];
+                // Convert old hpStr to hpVal if needed
+                if (data.hpStr && typeof data.hpVal !== 'number') {
+                    data.hpVal = parseInt(data.hpStr.match(/\d+/)[0]) || 1;
+                }
                 
                 currentCharacter = { ...currentCharacter, ...data };
                 updateDOM();
