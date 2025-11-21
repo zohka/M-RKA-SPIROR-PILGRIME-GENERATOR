@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MÖRKA SPIROR - Character Generator</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-main: #e0e0e0;
+            --text-dim: #888;
+            --accent-blue: #a0c0ff;
+            --accent-red: #8b0000;
+            --border-color: #333;
+            --input-bg: #111;
+            --btn-bg: #222;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+            background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000000 70%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
+        }
+
+        h1 {
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 0.2em;
+            color: var(--text-main);
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px var(--accent-blue);
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; letter-spacing: 2px; }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--accent-blue);
+            font-style: italic;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+            border-bottom: 1px solid var(--accent-blue);
+            padding-bottom: 10px;
+        }
+
+        /* Controls */
+        .controls-area {
+            border: 1px dashed var(--border-color);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .gen-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+
+        .io-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background-color: #333;
+            border-radius: 15px;
+            transition: 0.3s;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 26px;
+            height: 26px;
+            background-color: var(--text-main);
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input[type="checkbox"] {
+            display: none;
+        }
+
+        input[type="checkbox"]:checked + .toggle-switch {
+            background-color: var(--accent-blue);
+        }
+
+        input[type="checkbox"]:checked + .toggle-switch::after {
+            transform: translateX(30px);
+        }
+
+        button {
+            background-color: var(--btn-bg);
+            color: var(--text-main);
+            border: 1px solid var(--text-main);
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background-color: var(--text-main);
+            color: #000;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button#generate-btn {
+            font-size: 1.5rem;
+            padding: 15px 40px;
+            letter-spacing: 2px;
+            border: 2px solid var(--text-main);
+            box-shadow: 0 0 10px rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        button#generate-btn:hover {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 20px var(--accent-blue);
+        }
+
+        .btn-ccfolia {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .btn-ccfolia:hover {
+            background-color: var(--accent-blue);
+            color: #000;
+        }
+
+        /* Character Sheet */
+        .section {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--accent-blue);
+            padding-left: 10px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .equip-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .equip-text {
+            flex: 3;
+        }
+        .equip-dice {
+            flex: 1;
+            min-width: 70px;
+        }
+
+        .abilities-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .io-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .abilities-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .ability-score {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #111;
+            border: 1px solid #444;
+            padding: 10px;
+            min-width: 0;
+        }
+
+        .ability-val {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .class-special {
+            border: 1px solid var(--accent-blue);
+            padding: 10px;
+            margin-top: 10px;
+            background: rgba(160, 192, 255, 0.05);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Collapsible Memo */
+        .collapsible {
+            background-color: #222;
+            color: var(--text-main);
+            cursor: pointer;
+            padding: 15px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+            border-left: 4px solid var(--text-dim);
+            transition: 0.3s;
+            text-transform: uppercase;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapsible:hover, .collapsible.active {
+            background-color: #333;
+            border-left-color: var(--accent-blue);
+        }
+
+        .collapsible:after {
+            content: '\002B'; /* Plus sign */
+            color: var(--text-main);
+            font-weight: bold;
+            float: right;
+            margin-left: 5px;
+            font-size: 1.5rem;
+        }
+
+        .collapsible.active:after {
+            content: "\2212"; /* Minus sign */
+        }
+
+        .memo-content {
+            padding: 0 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+            background-color: #111;
+            border: 1px solid #333;
+            border-top: none;
+        }
+
+        .memo-content textarea {
+            width: 100%;
+            height: 200px;
+            background: transparent;
+            border: none;
+            color: #ccc;
+            padding: 15px 0;
+            resize: vertical;
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #555;
+        }
+        
+        /* Notification toast */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 2px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            border: 1px solid var(--accent-blue);
+            box-shadow: 0 0 15px #000;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>MÖRKA SPIROR</h1>
+    <div class="subtitle">The Twin-Moon Pilgrimage Generator</div>
+
+    <div class="controls-area">
+        <div class="gen-controls">
+            <label class="toggle-container">
+                <input type="checkbox" id="use-class-toggle" checked>
+                <div class="toggle-switch"></div>
+                <span>USE OPTIONAL CLASSES (クラスを使用)</span>
+            </label>
+            <button id="generate-btn">GENERATE PILGRIM</button>
+        </div>
+        <div class="io-controls">
+            <button id="copy-ccfolia-btn" class="btn-ccfolia">Copy to CCFOLIA</button>
+            <button id="save-btn">Save JSON</button>
+            <button id="load-btn">Load JSON</button>
+            <input type="file" id="file-input" accept=".json">
+        </div>
+    </div>
+
+    <div id="character-sheet">
+        <!-- Identity -->
+        <div class="section">
+            <div class="section-title">Identity (身元)</div>
+            <div class="grid-2">
+                <div>
+                    <label>Name (名前)</label>
+                    <input type="text" id="char-name" placeholder="Name" onchange="updateState('name', this.value)">
+                </div>
+                <div>
+                    <label>Origin (出自)</label>
+                    <textarea id="char-origin" placeholder="Origin" onchange="updateState('origin', this.value)"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class (Optional) -->
+        <div class="section" id="class-section">
+            <div class="section-title">Class (クラス)</div>
+            <div>
+                <label>Class Name</label>
+                <input type="text" id="class-name" readonly style="font-weight:bold; color:var(--accent-blue);">
+            </div>
+            <div style="margin-top:10px;">
+                <label>Description</label>
+                <textarea id="class-desc" readonly></textarea>
+            </div>
+            <div class="class-special">
+                <label>Class Ability (特技)</label>
+                <textarea id="class-ability" readonly style="height: 80px;"></textarea>
+            </div>
+        </div>
+
+        <!-- Abilities -->
+        <div class="section">
+            <div class="section-title">Abilities & Vitals (能力値)</div>
+            <div class="abilities-grid">
+                <div class="ability-score">
+                    <label>AGILITY</label>
+                    <div id="ab-agility" class="ability-val">0</div>
+                    <div style="font-size:0.7rem">敏捷</div>
+                </div>
+                <div class="ability-score">
+                    <label>PRESENCE</label>
+                    <div id="ab-presence" class="ability-val">0</div>
+                    <div style="font-size:0.7rem">存在</div>
+                </div>
+                <div class="ability-score">
+                    <label>STRENGTH</label>
+                    <div id="ab-strength" class="ability-val">0</div>
+                    <div style="font-size:0.7rem">筋力</div>
+                </div>
+                <div class="ability-score">
+                    <label>TOUGHNESS</label>
+                    <div id="ab-toughness" class="ability-val">0</div>
+                    <div style="font-size:0.7rem">強靭</div>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div>
+                    <label>HP (Hit Points)</label>
+                    <input type="text" id="char-hp" style="font-size: 1.2rem; font-weight: bold; color: var(--accent-red);" onchange="updateState('hpText', this.value)">
+                </div>
+                <div>
+                    <label>Sparks (火花/Omens)</label>
+                    <input type="text" id="char-sparks" style="font-size: 1.2rem; font-weight: bold; color: #ffd700;" onchange="updateState('sparksText', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <!-- Equipment -->
+        <div class="section">
+            <div class="section-title">Equipment (所持品)</div>
+            <div class="grid-2">
+                <div>
+                    <label>Weapons (武器)</label>
+                    <div class="equip-row">
+                        <div class="equip-text">
+                            <textarea id="eq-weapon" placeholder="Name & Desc" onchange="updateState('weapon', this.value)"></textarea>
+                        </div>
+                        <div class="equip-dice">
+                            <input type="text" id="eq-weapon-dice" placeholder="dX" style="text-align:center; font-weight:bold; color:#ff9999;" onchange="updateState('weaponDice', this.value)">
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label>Armor (防具)</label>
+                    <div class="equip-row">
+                        <div class="equip-text">
+                            <textarea id="eq-armor" placeholder="Name & Desc" onchange="updateState('armor', this.value)"></textarea>
+                        </div>
+                        <div class="equip-dice">
+                            <input type="text" id="eq-armor-dice" placeholder="-dX" style="text-align:center; font-weight:bold; color:#9999ff;" onchange="updateState('armorDice', this.value)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:10px;">
+                <label>Gear & Silver (携行品 & 銀貨)</label>
+                <textarea id="eq-gear" style="height: 120px;" onchange="updateState('gear', this.value)"></textarea>
+            </div>
+        </div>
+
+        <!-- Humanity -->
+        <div class="section">
+            <div class="section-title">Humanity & Scars (人間性 & 傷跡)</div>
+            <div style="margin-bottom: 10px;">
+                <label>The Spark (巡礼の動機)</label>
+                <textarea id="hum-spark" onchange="updateState('spark', this.value)"></textarea>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label>Past Before Ash (灰になる前の過去)</label>
+                <textarea id="hum-past" onchange="updateState('past', this.value)"></textarea>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <label>Frozen Psyche (凍てつく精神)</label>
+                    <textarea id="hum-psyche" onchange="updateState('psyche', this.value)"></textarea>
+                </div>
+                <div>
+                    <label>Ravaged Flesh (蝕まれた肉体)</label>
+                    <textarea id="hum-flesh" onchange="updateState('flesh', this.value)"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collapsible Memo -->
+        <div style="margin-top: 30px;">
+            <button type="button" class="collapsible">MEMO / NOTES (自由記述)</button>
+            <div class="memo-content">
+                <textarea id="free-memo" placeholder="遺書、呪文、あるいは恨み言..." onchange="updateState('memo', this.value)"></textarea>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        MÖRKA SPIROR is an independent production.<br>
+        MÖRK BORG Third Party License.
+    </footer>
+    
+    <div id="toast">Notification</div>
+</div>
+
+<script>
+    /* ================= DATA TABLES ================= */
+    const NAMES_D66={11:"アグニ",12:"ベーク",13:"シンダー",14:"ドロスト",15:"エイス",16:"フリッカー",21:"グリム",22:"ハウド",23:"イセル",24:"ヤルヴ",25:"コル",26:"ルーメ",31:"モル",32:"ニックス",33:"オリエ",34:"ペク",35:"クイル",36:"ロスト",41:"スクーガ",42:"タルグ",43:"ウグン",44:"ヴェケ",45:"ヴァルグ",46:"クシル",51:"ユルヴァ",52:"ジンク",53:"エスカ",54:"オード",55:"オング",56:"クラグ",61:"ソール",62:"モーネ",63:"ヴィット",64:"スヴァルト",65:"ノル",66:"名無し"};
+    const ORIGINS=["蝋の都、ロウ (Rou): お前の肌は熱で溶けたようにただれている。寒さを恐れる。","鏡の海、スペゲルハヴェット: 氷の上を歩くのだけは得意だ。鏡に映る自分の顔を割りたくなる。","錆びた肺、クグハムン: 呼吸するたびに錆びた鉄の味がする。静寂に耐えられない。","渇きの森、トルストヴァルト: 「眠ったら死ぬ」ことを本能で知っている。睡眠が極端に浅い。","盲目の天文台、オクルス: 太陽を見たことがないが、青白い月の光だけは直視できる。","何処でもない雪原: 故郷の記憶などない。あるのは「止まったら凍る」という事実だけだ。"];
+    const PSYCHE_TRAITS=["熱量への執着: 相手との距離を不快なほど詰める。","青い幻聴: 死んだはずの家族の声を聞く。","影への不信: 自分の影が自分を殺そうとしていると信じている。","燃料の美食家: 薪や油の「味」や「燃える匂い」に詳しい。","太陽の否定: 太陽など最初から存在しなかったと信じている。","瞬きしない: 乾燥した眼球で虚空を見つめ続ける。","震える指: 何かを燃やしたいという衝動を抑えている。","死体愛好: 死体を見ると「美しい薪」として評価する。","エントロピー恐怖症: 物が壊れる音、錆びる音にパニックを起こす。","蝋の収集癖: 自分の体から落ちた垢や蝋を集めている。","逆さまの思考: 重要な決断をするときだけコイントスに頼る。","沈黙の歌い手: 声を出さずに常に歌っている。","痛みによる確認: 凍っていないか確認するために自分を針で刺す。","鏡への憎悪: 鏡や氷に映る自分の顔を直視できない。","機械仕掛けの祈り: 機械音を聞くと安堵する。","盗癖: 「暖かいもの」だけを無意識にポケットに入れる。","死の予言: 仲間の死因を勝手に断定する。","月光浴: 青白い月の光を浴びると興奮を覚える。","記憶の混濁: 自分ではない誰かの記憶が混ざっている。","絶対的な希望: 狂気的なまでに「太陽は戻る」と信じている。"];
+    const FLESH_TRAITS=["ガラスの指先: 片手の指先が半透明のガラス化している。","油の汗: 緊張すると黒く臭い工業用油が滲み出る。","失われた鼻: 凍傷で鼻が削げ落ちている。","縫い目だらけ: 体中が粗雑な糸で縫い合わされている。","錆び斑: 肌の一部に赤錆のような斑点がある。","青白い静脈: 血管が浮き上がり、血が冷たく青光りしている。","歯車の義眼: 片目が動かない錆びた歯車に置き換わっている。","溶けた左半身: 皮膚が蝋のように垂れ下がっている。","影がない: お前には影がない。あるいは遅れてついてくる。","氷の呼気: 気温に関係なく、吐く息が常に白い霧となる。","植物の寄生: 金属質の「針葉樹の枝」が生えている。","透明な皮膚: 肋骨と心臓の鼓動が透けて見える。","余分な関節: 指や腕の関節が一つ多い、あるいは少ない。","黒い爪: 手足の爪が黒曜石のように硬く尖っている。","発光する傷: 古い傷口が暗闇でぼんやりと燐光を放つ。","交換された腕: 片腕の色やサイズが明らかに違う。","声帯の凍結: 声がガラガラで、囁き声しか出せない。","毛皮の変異: 体毛が異常に発達し、獣のように覆っている。","脈動する腫瘍: 体のどこかに動くコブがある。","完全な美: この醜い世界において、容姿だけが不気味なほど整っている。"];
+    const PAST_BACKGROUNDS=["死体運び: 凍りついた死体を燃料として運搬していた。(所持品: 頑丈なロープ)","灯台守の生き残り: 鏡の海で灯台を守り続けていた。(所持品: ヒビ割れた望遠鏡)","ボイラー整備士: クグハムンの配管の隙間で働いていた。(所持品: 油塗れの布切れ)","偽の預言者: 絶望した人々から食料を巻き上げていた。(所持品: 聖書の切れ端)","レンズ研磨工: オクルスで氷を削ってレンズを作っていた。(所持品: 研磨剤)","人肉嗜食者: 生き延びるために一線を超えた。(所持品: 骨を断つためのノコギリ)","氷上漁師: 深海の奇妙な魚を釣っていた。(所持品: 釣り針と糸)","灰被りの従者: 騎士の鎧に油を注ぐ役割だった。(所持品: 空の油缶)","地図職人: 「綻び」の地図を描こうとして発狂しかけた。(所持品: 不正確な地図)","蝋の彫刻家: 死者の顔を蝋で再現する仕事をしていた。(所持品: ヘラ)","脱走兵: 警備隊から逃げ出した。(所持品: 削り取られた認識票)","記憶喪失の巡礼者: 以前にも尖塔に挑んで失敗したらしい。(所持品: 奇妙な石片)"];
+    const PILGRIMAGE_MOTIVES=["贖罪: 過去に見殺しにした仲間のため、罪悪感を焼き尽くしたい。","復讐: 「青白い月」の怪物に大切なものを奪われた。","純粋な信仰: 太陽は神であり、その顔を一目見たい。","死への渇望: どうせ死ぬなら、最大の「薪」として燃え尽きたい。","誰かとの約束: 「必ず太陽を取り戻す」という呪いに縛られている。","本能: 魂が「尖塔」に呼ばれている。","寄生虫の治療: 体内の「氷の寄生虫」を太陽の放射線で殺したい。","宇宙的放火癖: 「死んだ太陽」という可燃物に火をつけたい。","光への中毒: 太陽の核にある「純粋な光」を直接摂取したい。","王の帰還妄想: 「私は太陽の正当な後継者だ」と信じ込んでいる。","絶対的な逃亡: 尖塔の頂上だけが、奴らが追ってこられない聖域だ。","配達任務: 「この箱を太陽の核に投げ込め」と雇われた。"];
+    const WEAPONS=["凍てついた大腿骨 (d4): 殴るたびに少し溶ける。ファンブルで砕ける。","鯨捕りのハープーン (d6): ロープをつければ敵を引き寄せられる。","赤熱した火掻き棒 (d4+1): 常に熱い。松明代わりになる。","採掘用つるはし (d6): 硬い甲羅や氷の皮膚に対し攻撃DR-2。","太陽硝子のナイフ (d4): アンデッドにはd8ダメージ。","ボイラー解体ハンマー (d6): 物体を破壊する判定に自動成功。","錆びたチェーンウィップ (d4): 命中時、d6で6なら武器を落とさせる。","氷柱の槍 (d8): 使い捨て。命中すると折れて追加d2ダメージ。","削岩ドリル (d8): 両手持ち。使用後d2ラウンド聞こえなくなる。","星鉄のグレートソード (d10): 両手持ち。重すぎて敏捷DR+2。","対人用クロスボウ (d8): ボルト10本付き。","点火用フレアガン (d6): 弾薬3発。着弾点は1分間光源になる。"];
+    const ARMORS=["獣の毛皮とボロ布 (Tier 1, -d2): 濡れると乾くまで効果0。","硬化レザーコート (Tier 1, -d2): 人の皮かもしれない。臭う。","廃材のパッチワーク (Tier 2, -d4): 敏捷DR+2。","凍結防止の重層服 (Tier 2, -d4): 冷気ダメージ-1。敏捷DR+2。","古代の潜水服 (Tier 3, -d6): 毒ガス無効。敏捷DR+4、防御DR+2。","棺桶の蓋(盾) (-1): 隠れれば死体のふりができる。"];
+    const GEARS=["ランタンと油: 6時間持続。","鯨の脂肪(固形): 燃料兼非常食。5回分。","マグネシウムの短冊: 一瞬の強烈な閃光。","黒曜石の解剖刀: 鋭利。切断DR-2。","保温塩: 衣服に入れるとd4時間発熱。","麻薬入りの煙草: 恐怖判定を無効化。","汚れた聖書: 焚き付けに最適。","縫合キット: 感染症判定を1回やり直せる。","アイゼン: 氷の上で転ばない。","偽造された通行証: 検問を一度だけ通過できるかも。","携帯用蒸留器: 雪や汚水を飲み水に変える。","誰かの遺書: 読むと10分間動けなくなる。","「綻び」探知機: 近くに綻びがあると針が狂う。","防腐剤の瓶: 「薪」の運搬に必須。","ガラスの目玉: 嵌めると「死者の視界」を得る。","睡眠薬入りの酒: 寒さを忘れて眠れる。","ペットの雪ネズミ: 狭い穴に入って鍵を開ける(50%)。","チョーク(蛍光): 暗闇で光る文字が書ける。","太陽の絵画(贋作): 毒々しい色の太陽の絵。","爆薬の詰まった瓶: 投擲d10ダメージ。d6で1なら不発。"];
+    const CLASSES = {
+        "Sun-Dreamer": {
+            name: "太陽の夢想家 (Sun-Dreamer)",
+            desc: "君は太陽を見たことがないが、夢の中でその「熱」に焼かれた。血管には液体状の光が流れている。",
+            hp: "Toughness + d6",
+            sparks: "d2",
+            stats_mod: { agility: 0, presence: 2, strength: 0, toughness: -2 },
+            weapon_table: ["石のナイフ (d4)","太陽の杖 (d4, 光源になる)","太陽の杖 (d4, 光源になる)","太陽の杖 (d4, 光源になる)","太陽の杖 (d4, 光源になる)","壊れた鏡の破片 (d4, 目くらまし可)"],
+            abilities: ["ソーラー・フレア: 1日1回【存在】DR12。視界内の敵はd4ラウンド不利。","光合成の血: 食料不要。代わりに1日1時間、強い光源で瞑想が必要。","聖なる火傷: 素手が熱を帯びる。通常d2、アンデッドにはd8。","陽炎の幻影: 静止中、遠距離防御DR-2。","生ける暖炉: 隣接する味方は寒冷無効、休憩回復+1。","死に土産の爆発: 死亡時、3d6ダメージの爆発を起こす。"],
+            armor_limit: "Tier 1 (軽装)まで"
+        },
+        "Rift-Stitcher": {
+            name: "綻び縫い (Rift-Stitcher)",
+            desc: "君は長い針と「影の糸」を持ち、空間を繋ぎ、傷を塞ぐ。",
+            hp: "Toughness + d8",
+            sparks: "d2",
+            stats_mod: { agility: 2, presence: 0, strength: -1, toughness: 0 },
+            weapon_fixed: "巨大な縫い針 (槍相当 d6), 影の糸巻き",
+            abilities: ["影縫い: ダメージの代わりに敵の影を縫い付け移動不能にする。","外科医の指: 【敏捷】DR12でHP d6回復・感染治療。失敗でd2ダメージ。","空間の綻び: 1日1回、30ft以内の2地点を短絡させ移動できる。","解体糸: 攻撃時、防具ランクを1段階無視する。","ポケット・ディメンション: アイテム所持数2倍。隠したものは見つからない。","操り人形: 死体に糸を通し、d4時間下僕として操る。"],
+            armor_limit: "制限なし"
+        },
+        "Ash-Knight": {
+            name: "灰被りの騎士 (Ash-Knight)",
+            desc: "旧文明の動力甲冑の残骸をまとった戦士。鎧は常に燃料を求めている。",
+            hp: "Toughness + d10",
+            sparks: "d2",
+            stats_mod: { agility: -2, presence: 0, strength: 2, toughness: 0 },
+            weapon_fixed: "巨大なレンチ (メイス d6)",
+            extra_note: "燃料飢餓: 食料2倍または油を消費。不足すると敏捷DR+4。",
+            abilities: ["蒸気排熱: 1戦闘1回、周囲5ftにd4熱ダメージと目くらまし。","油圧式鉄拳: 素手d6。Natural 20で吹き飛ばし即死(大型は+d10)。","サーチライト・アイ: 兜の片目が発光。隠れた敵発見DR-4。","循環呼吸システム: 毒ガス・水中・真空無効。1時間に油1本消費。","緊急装甲パージ: ダメージを一度0にするが防具ランク低下。","歩く暖房: 半径10ftの味方は極寒ペナルティを受けない。"],
+            armor_fixed: "動力甲冑の残骸 (Tier 3, -d6, 敏捷ペナルティは+2で済む)"
+        },
+        "Moon-Turncoat": {
+            name: "月の裏切り者 (Moon-Turncoat)",
+            desc: "かつて「屍の月」を崇めた元狂信者。影の中に隠れる術を知っている。",
+            hp: "Toughness + d6",
+            sparks: "d2",
+            stats_mod: { agility: 1, presence: 1, strength: 0, toughness: 0 },
+            weapon_fixed: "儀式用短剣 (d4, 不意打ち+3)",
+            abilities: ["影の外套: 暗闇で静止中不可視。移動しても敏捷DR10で見つからない。","死体語り: 新鮮な死体の脳を食べ、最期の光景を幻視する。","偽りの聖句: カルトやアンデッドを騙し、攻撃を止めさせる。","月の重力: 1日1回高く跳躍(30ft)。落下ダメージ無視。","裏切りの毒: 毒使用DR難易度増。自身は毒無効。","冷たい手: 体温がない(熱感知無効)。触れて水を凍らせる。"],
+            armor_limit: "Tier 2 (中装)まで"
+        },
+        "Wax-Saint": {
+            name: "蝋の聖人 (Wax-Saint)",
+            desc: "皮膚は溶けた蝋でできている。体内には「聖なる芯」が燃えている。",
+            hp: "Toughness + d8",
+            sparks: "d2",
+            stats_mod: { agility: 0, presence: 0, strength: 0, toughness: 2 },
+            weapon_fixed: "燭台のメイス (d6, 点火時+1熱)",
+            extra_note: "火炎ダメージは常に最大値を受ける。",
+            abilities: ["再形成: 休憩回復が常に最大値(熱源必須)。","粘着性の拘束: HP d4を失い、敵を蝋で固めて動けなくする。","聖なる芯: 頭部に点火できる。点火中、存在判定DR-2。","顔無き者: 顔の蝋をこねて変装する。自動成功。","奉仕の心: 自分の肉を削ぎ味方に食べさせHP d6回復。","硬化: 1戦闘1回、体を冷やし防具Tier 3(-d6)になるが動きが遅くなる。"],
+            armor_fixed: "蝋の皮膚 (Tier 1相当, -d2)。通常の防具は装備不可。"
+        }
+    };
+
+    /* ================= STATE MANAGEMENT ================= */
+    
+    let currentCharacter = {
+        name: "",
+        origin: "",
+        className: "",
+        classDesc: "",
+        classAbility: "",
+        abilities: { agility: 0, presence: 0, strength: 0, toughness: 0 },
+        hpVal: 0,
+        hpMax: 0,
+        hpStr: "",
+        sparksVal: 0,
+        sparksMax: 0,
+        sparksStr: "",
+        weapon: "",
+        weaponDice: "",
+        armor: "",
+        armorDice: "",
+        gear: "",
+        humanity: { spark: "", past: "", psyche: "", flesh: "" },
+        memo: "",
+        useClass: true
+    };
+
+    function updateState(key, value) {
+        if(key === 'name') currentCharacter.name = value;
+        if(key === 'origin') currentCharacter.origin = value;
+        if(key === 'hpText') currentCharacter.hpStr = value;
+        if(key === 'sparksText') currentCharacter.sparksStr = value;
+        if(key === 'weapon') currentCharacter.weapon = value;
+        if(key === 'weaponDice') currentCharacter.weaponDice = value;
+        if(key === 'armor') currentCharacter.armor = value;
+        if(key === 'armorDice') currentCharacter.armorDice = value;
+        if(key === 'gear') currentCharacter.gear = value;
+        if(key === 'spark') currentCharacter.humanity.spark = value;
+        if(key === 'past') currentCharacter.humanity.past = value;
+        if(key === 'psyche') currentCharacter.humanity.psyche = value;
+        if(key === 'flesh') currentCharacter.humanity.flesh = value;
+        if(key === 'memo') currentCharacter.memo = value;
+    }
+
+    function updateDOM() {
+        document.getElementById('char-name').value = currentCharacter.name;
+        document.getElementById('char-origin').value = currentCharacter.origin;
+        
+        const classSection = document.getElementById('class-section');
+        if (currentCharacter.className) {
+            classSection.classList.remove('hidden');
+            document.getElementById('class-name').value = currentCharacter.className;
+            document.getElementById('class-desc').value = currentCharacter.classDesc;
+            document.getElementById('class-ability').value = currentCharacter.classAbility;
+        } else {
+            classSection.classList.add('hidden');
+        }
+
+        document.getElementById('ab-agility').innerText = currentCharacter.abilities.agility > 0 ? "+" + currentCharacter.abilities.agility : currentCharacter.abilities.agility;
+        document.getElementById('ab-presence').innerText = currentCharacter.abilities.presence > 0 ? "+" + currentCharacter.abilities.presence : currentCharacter.abilities.presence;
+        document.getElementById('ab-strength').innerText = currentCharacter.abilities.strength > 0 ? "+" + currentCharacter.abilities.strength : currentCharacter.abilities.strength;
+        document.getElementById('ab-toughness').innerText = currentCharacter.abilities.toughness > 0 ? "+" + currentCharacter.abilities.toughness : currentCharacter.abilities.toughness;
+
+        document.getElementById('char-hp').value = currentCharacter.hpStr;
+        document.getElementById('char-sparks').value = currentCharacter.sparksStr;
+
+        document.getElementById('eq-weapon').value = currentCharacter.weapon;
+        document.getElementById('eq-weapon-dice').value = currentCharacter.weaponDice;
+        document.getElementById('eq-armor').value = currentCharacter.armor;
+        document.getElementById('eq-armor-dice').value = currentCharacter.armorDice;
+        document.getElementById('eq-gear').value = currentCharacter.gear;
+
+        document.getElementById('hum-spark').value = currentCharacter.humanity.spark;
+        document.getElementById('hum-past').value = currentCharacter.humanity.past;
+        document.getElementById('hum-psyche').value = currentCharacter.humanity.psyche;
+        document.getElementById('hum-flesh').value = currentCharacter.humanity.flesh;
+        
+        document.getElementById('free-memo').value = currentCharacter.memo || "";
+    }
+
+    /* ================= LOGIC ================= */
+
+    function roll(diceCount, sides) {
+        let total = 0;
+        for(let i=0; i<diceCount; i++) total += Math.floor(Math.random() * sides) + 1;
+        return total;
+    }
+    function rollD66() {
+        return (Math.floor(Math.random() * 6) + 1) * 10 + (Math.floor(Math.random() * 6) + 1);
+    }
+    function getRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    function convertToStat(sum) {
+        if (sum <= 4) return -3;
+        if (sum <= 6) return -2;
+        if (sum <= 8) return -1;
+        if (sum <= 12) return 0;
+        if (sum <= 14) return 1;
+        if (sum <= 16) return 2;
+        return 3;
+    }
+    function roll4d6DropLowest() {
+        let rolls = [];
+        for(let i=0; i<4; i++) rolls.push(Math.floor(Math.random()*6)+1);
+        rolls.sort((a,b) => a-b);
+        rolls.shift();
+        return rolls.reduce((a,b) => a+b, 0);
+    }
+
+    // Robust dice extraction
+    function findDiceValue(text, type) {
+        if (!text) return "";
+        let regex;
+        if (type === 'armor') {
+            regex = /-(d\d+|\d+)/; 
+        } else {
+            regex = /\b(\d*d\d+(?:\+\d+)?)\b/;
+        }
+        const match = text.match(regex);
+        if (match) return match[1];
+        return "";
+    }
+
+    function generateCharacter() {
+        const useClass = document.getElementById('use-class-toggle').checked;
+        currentCharacter.useClass = useClass;
+
+        const nameRoll = rollD66();
+        currentCharacter.name = NAMES_D66[nameRoll] || "名無し";
+        currentCharacter.origin = getRandom(ORIGINS);
+
+        currentCharacter.humanity.psyche = getRandom(PSYCHE_TRAITS);
+        currentCharacter.humanity.flesh = getRandom(FLESH_TRAITS);
+        currentCharacter.humanity.past = getRandom(PAST_BACKGROUNDS);
+        currentCharacter.humanity.spark = getRandom(PILGRIMAGE_MOTIVES);
+
+        let charClass = null;
+        let stats = { agility: 0, presence: 0, strength: 0, toughness: 0 };
+        let hpVal = 0;
+        let hpMaxStr = "";
+        let sparksStr = "d2";
+        let sparksVal = 0;
+
+        let foodDays = roll(1, 4);
+        let commonGear = [
+            "水袋 (中身は凍りかけている)",
+            `${foodDays}日分の食料 (乾燥した苔、または謎の肉)`,
+            `銀貨: ${roll(1,6) * 10}s`
+        ];
+        let gearText = commonGear.join("\n") + "\n" + getRandom(GEARS) + "\n";
+        let weaponText = "";
+        let weaponDice = "";
+        let armorText = "";
+        let armorDice = "";
+
+        if (useClass) {
+            const classKeys = Object.keys(CLASSES);
+            const selectedKey = classKeys[Math.floor(Math.random() * classKeys.length)];
+            charClass = CLASSES[selectedKey];
+
+            currentCharacter.className = charClass.name;
+            currentCharacter.classDesc = charClass.desc;
+            
+            stats.agility = convertToStat(roll(3,6) + charClass.stats_mod.agility);
+            stats.presence = convertToStat(roll(3,6) + charClass.stats_mod.presence);
+            stats.strength = convertToStat(roll(3,6) + charClass.stats_mod.strength);
+            stats.toughness = convertToStat(roll(3,6) + charClass.stats_mod.toughness);
+
+            hpMaxStr = charClass.hp;
+            let hpDie = parseInt(charClass.hp.match(/d(\d+)/)[1]);
+            hpVal = stats.toughness + roll(1, hpDie);
+            if (hpVal < 1) hpVal = 1;
+
+            sparksStr = charClass.sparks;
+            sparksVal = roll(1, parseInt(sparksStr.replace('d','')));
+
+            currentCharacter.classAbility = getRandom(charClass.abilities);
+
+            // Equip
+            if (charClass.weapon_fixed) weaponText = charClass.weapon_fixed;
+            else if (charClass.weapon_table) weaponText = getRandom(charClass.weapon_table);
+            else weaponText = getRandom(WEAPONS);
+
+            if (charClass.armor_fixed) armorText = charClass.armor_fixed;
+            else if (charClass.armor_limit) armorText = `${getRandom(ARMORS)} (${charClass.armor_limit})`;
+            else armorText = getRandom(ARMORS);
+
+            if (charClass.extra_note) gearText += `\n[特記] ${charClass.extra_note}`;
+
+        } else {
+            currentCharacter.className = "";
+            currentCharacter.classDesc = "";
+            currentCharacter.classAbility = "";
+
+            stats.agility = convertToStat(roll4d6DropLowest());
+            stats.presence = convertToStat(roll4d6DropLowest());
+            stats.strength = convertToStat(roll4d6DropLowest());
+            stats.toughness = convertToStat(roll4d6DropLowest());
+
+            hpMaxStr = "Toughness + d8";
+            hpVal = stats.toughness + roll(1,8);
+            if (hpVal < 1) hpVal = 1;
+            
+            sparksStr = "d2";
+            sparksVal = roll(1, 2);
+
+            weaponText = getRandom(WEAPONS);
+            armorText = getRandom(ARMORS);
+        }
+
+        weaponDice = findDiceValue(weaponText, 'weapon');
+        armorDice = findDiceValue(armorText, 'armor');
+
+        currentCharacter.abilities = stats;
+        currentCharacter.hpVal = hpVal;
+        currentCharacter.hpMax = 0; 
+        currentCharacter.hpStr = `${hpVal} (Max: ${hpMaxStr})`;
+        currentCharacter.sparksVal = sparksVal;
+        currentCharacter.sparksStr = `${sparksVal} / ${sparksStr}`;
+        currentCharacter.weapon = weaponText;
+        currentCharacter.weaponDice = weaponDice;
+        currentCharacter.armor = armorText;
+        currentCharacter.armorDice = armorDice;
+        currentCharacter.gear = gearText;
+        
+        // Keep existing memo if regenerating? Usually reset is better for new char.
+        currentCharacter.memo = "";
+
+        updateDOM();
+    }
+
+    /* ================= COLLAPSIBLE MEMO ================= */
+    const coll = document.getElementsByClassName("collapsible");
+    for (let i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            const content = this.nextElementSibling;
+            if (content.style.maxHeight){
+                content.style.maxHeight = null;
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+            } 
+        });
+    }
+
+    /* ================= EXPORT / IMPORT / CCFOLIA ================= */
+
+    function showToast(message) {
+        const x = document.getElementById("toast");
+        x.textContent = message;
+        x.className = "show";
+        setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+    }
+
+    function copyToCcfolia() {
+        let commands = [];
+        const a = currentCharacter.abilities;
+        
+        commands.push(`1d20+${a.agility} 敏捷(Agility)判定`);
+        commands.push(`1d20+${a.presence} 存在(Presence)判定`);
+        commands.push(`1d20+${a.strength} 筋力(Strength)判定`);
+        commands.push(`1d20+${a.toughness} 強靭(Toughness)判定`);
+        commands.push("");
+        commands.push(`1d6+${a.agility} イニシアチブ(Initiative)`);
+        commands.push(`1d20+${a.agility}>=12 防御判定(Defence)`);
+        commands.push(`1d20+${a.strength}>=12 近接攻撃(Melee)`);
+        commands.push(`1d20+${a.presence}>=12 射撃/Power(Ranged)`);
+        
+        if(currentCharacter.weaponDice) {
+            let wName = currentCharacter.weapon.split(':')[0] || "Weapon";
+            wName = wName.replace(/\(.*\)/, '').trim();
+            commands.push(`${currentCharacter.weaponDice} ダメージ: ${wName}`);
+        }
+
+        if(currentCharacter.armorDice) {
+            let aName = currentCharacter.armor.split(':')[0] || "Armor";
+            aName = aName.replace(/\(.*\)/, '').trim();
+            commands.push(`${currentCharacter.armorDice} ダメージ軽減: ${aName}`);
+        }
+
+        const data = {
+            kind: "character",
+            data: {
+                name: currentCharacter.name,
+                memo: `【クラス】${currentCharacter.className}\n\n【出自】\n${currentCharacter.origin}\n\n【人間性】\n${currentCharacter.humanity.spark}\n${currentCharacter.humanity.psyche}\n${currentCharacter.humanity.flesh}\n\n【装備】\n武器: ${currentCharacter.weapon} [${currentCharacter.weaponDice}]\n防具: ${currentCharacter.armor} [-${currentCharacter.armorDice}]\n\n${currentCharacter.gear}\n\n【特技】\n${currentCharacter.classAbility}\n\n【MEMO】\n${currentCharacter.memo}`,
+                initiative: a.agility, 
+                status: [
+                    { label: "HP", value: currentCharacter.hpVal, max: currentCharacter.hpVal },
+                    { label: "Sparks", value: currentCharacter.sparksVal, max: parseInt(currentCharacter.sparksStr.split('/')[1]) || 2 }
+                ],
+                params: [
+                    { label: "敏捷", value: String(a.agility) },
+                    { label: "存在", value: String(a.presence) },
+                    { label: "筋力", value: String(a.strength) },
+                    { label: "強靭", value: String(a.toughness) }
+                ],
+                commands: commands.join("\n")
+            }
+        };
+
+        navigator.clipboard.writeText(JSON.stringify(data)).then(() => {
+            showToast("Copied to Clipboard! (Paste in CCFOLIA)");
+        }, () => {
+            showToast("Failed to copy.");
+        });
+    }
+
+    function saveJson() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentCharacter, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", `MorkaSpiror_${currentCharacter.name || "Pilgrim"}.json`);
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
+    function loadJson() {
+        const input = document.getElementById('file-input');
+        input.value = '';
+        input.click();
+    }
+
+    document.getElementById('file-input').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data.weaponDice && data.weapon) data.weaponDice = findDiceValue(data.weapon, 'weapon');
+                if (!data.armorDice && data.armor) data.armorDice = findDiceValue(data.armor, 'armor');
+                
+                currentCharacter = { ...currentCharacter, ...data };
+                updateDOM();
+                showToast("Character Loaded Successfully!");
+            } catch (err) {
+                showToast("Error loading file: Invalid JSON");
+                console.error(err);
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    document.getElementById('generate-btn').addEventListener('click', generateCharacter);
+    document.getElementById('copy-ccfolia-btn').addEventListener('click', copyToCcfolia);
+    document.getElementById('save-btn').addEventListener('click', saveJson);
+    document.getElementById('load-btn').addEventListener('click', loadJson);
+
+    generateCharacter();
+
+</script>
+
+</body>
+</html>
